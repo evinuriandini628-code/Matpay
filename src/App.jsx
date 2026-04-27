@@ -1,226 +1,628 @@
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
+import React, { useState } from "react";
 import {
-  LayoutDashboard,
-  Wallet,
-  ReceiptText,
-  QrCode,
-  KeyRound,
-  Banknote,
-  Clock3,
-  Settings,
-  Menu,
-  X,
-  Eye,
-  EyeOff,
-  ShieldCheck,
-  Bell,
-  Search,
-  ChevronRight,
-  UserPlus,
-  LogIn,
-  Copy,
-  CheckCircle2,
-  Sparkles,
-  UploadCloud,
-} from 'lucide-react'
+  LayoutDashboard, ReceiptText, QrCode, Wallet, Banknote, Clock3,
+  KeyRound, Settings, Headphones, Menu, X, Bell, Search, Eye, EyeOff,
+  LogIn, UserPlus, Copy, ShieldCheck, CheckCircle2, AlertCircle,
+  Loader2, Plus, ChevronRight
+} from "lucide-react";
+import { motion } from "framer-motion";
 
 const assets = {
-  logoIcon: '/assets/logo/logo-icon.png',
-  logoFullWhite: '/assets/logo/logo-full-white.png',
-  logoText: '/assets/logo/logo-text.png',
-  mascotLogin: '/assets/mascot/maskot-login.png',
-  mascotQris: '/assets/mascot/maskot-qris.png',
-  mascotSuccess: '/assets/mascot/maskot-success.png',
-  mascotFailed: '/assets/mascot/maskot-failed.png',
-  mascotLoading: '/assets/mascot/maskot-loading.png',
-  mascotAvatar: '/assets/mascot/maskot-avatar.png',
+  logoIcon: "/assets/logo/logo-icon.png",
+  logoFullWhite: "/assets/logo/logo-full-white.png",
+
+  mascotLogin: "/assets/mascot/maskot-login.png",
+  mascotQris: "/assets/mascot/maskot-qris.png",
+  mascotLoading: "/assets/mascot/maskot-loading.png",
+  mascotSuccess: "/assets/mascot/maskot-success.png",
+  mascotFailed: "/assets/mascot/maskot-failed.png",
+  mascotCs: "/assets/mascot/maskot-cs.png",
+  mascotAvatar: "/assets/mascot/maskot-avatar.png",
+  mascotEmpty: "/assets/mascot/maskot-empty.png",
+};
+
+const menus = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "transactions", label: "Transaksi", icon: ReceiptText },
+  { id: "qris", label: "QRIS", icon: QrCode },
+  { id: "withdraw", label: "Withdraw", icon: Banknote },
+  { id: "settlement", label: "Settlement", icon: Clock3 },
+  { id: "apikey", label: "API Key", icon: KeyRound },
+  { id: "support", label: "Support", icon: Headphones },
+  { id: "settings", label: "Settings", icon: Settings },
+];
+
+const trx = [
+  ["INV-240506-001", "QRIS Payment", "Rp150.000", "Berhasil"],
+  ["INV-240506-002", "QRIS Payment", "Rp89.000", "Pending"],
+  ["INV-240506-003", "QRIS Payment", "Rp200.000", "Gagal"],
+  ["INV-240506-004", "QRIS Payment", "Rp75.000", "Berhasil"],
+];
+
+function Img({ src, alt, className }) {
+  const [err, setErr] = useState(false);
+  if (err) return null;
+  return <img src={src} alt={alt} onError={() => setErr(true)} className={className} />;
 }
 
-const menu = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'transactions', label: 'Transaksi', icon: ReceiptText },
-  { id: 'payment', label: 'QRIS Payment', icon: QrCode },
-  { id: 'withdraw', label: 'Withdraw', icon: Banknote },
-  { id: 'settlement', label: 'Settlement', icon: Clock3 },
-  { id: 'apikey', label: 'API Key', icon: KeyRound },
-  { id: 'settings', label: 'Settings', icon: Settings },
-]
-
-const transactions = [
-  { id: 'MP-2401', name: 'Topup Diamond MLBB', amount: 'Rp25.000', status: 'Success', time: '2 menit lalu' },
-  { id: 'MP-2402', name: 'Pembelian Rank VIP', amount: 'Rp50.000', status: 'Pending', time: '9 menit lalu' },
-  { id: 'MP-2403', name: 'QRIS Checkout', amount: 'Rp120.000', status: 'Success', time: '21 menit lalu' },
-  { id: 'MP-2404', name: 'Invoice PPOB', amount: 'Rp15.000', status: 'Failed', time: '34 menit lalu' },
-]
-
-function AssetImage({ src, alt, className, fallback }) {
-  const [error, setError] = useState(false)
-  if (error) return fallback || null
-  return <img src={src} alt={alt} className={className} onError={() => setError(true)} />
-}
-
-function IconFallback({ className = 'h-11 w-11' }) {
-  return (
-    <div className={`${className} relative grid place-items-center rounded-2xl bg-gradient-to-br from-[#1076ff] via-[#0457d8] to-[#062b86] shadow-lg shadow-blue-500/25`}>
-      <Wallet className="h-6 w-6 text-white" />
-      <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-emerald-400 ring-4 ring-[#050b1f]" />
-    </div>
-  )
-}
-
-function Logo({ compact = false }) {
+function Logo() {
   return (
     <div className="flex items-center gap-3">
-      <AssetImage src={assets.logoIcon} alt="MatPay logo icon" className="h-11 w-11 rounded-2xl object-contain shadow-lg shadow-blue-500/20" fallback={<IconFallback />} />
-      {!compact && (
-        <div className="min-w-0">
-          <AssetImage src={assets.logoFullWhite} alt="MatPay" className="h-10 max-w-[160px] object-contain object-left" fallback={<><h1 className="text-xl font-black tracking-tight text-white">MatPay</h1><p className="text-xs text-blue-200/70">Smart Payment Gateway</p></>} />
-        </div>
-      )}
-    </div>
-  )
-}
-
-function MascotSlot({ type = 'login', className = '' }) {
-  const src = type === 'qris' ? assets.mascotQris : type === 'success' ? assets.mascotSuccess : type === 'failed' ? assets.mascotFailed : type === 'loading' ? assets.mascotLoading : assets.mascotLogin
-  return (
-    <div className={`relative ${className}`}>
-      <div className="absolute inset-x-10 bottom-3 h-14 rounded-full bg-blue-500/30 blur-2xl" />
-      <AssetImage
-        src={src}
-        alt={`MatPay mascot ${type}`}
-        className="relative z-10 mx-auto max-h-full max-w-full object-contain drop-shadow-2xl"
-        fallback={<div className="relative z-10 grid aspect-square w-full place-items-center rounded-[2rem] border border-blue-300/20 bg-blue-500/10 text-blue-100"><UploadCloud className="h-12 w-12" /><span className="absolute bottom-6 text-xs font-bold text-blue-100/70">Upload {src}</span></div>}
-      />
-    </div>
-  )
-}
-
-function AuthPage({ mode, setMode, onLogin }) {
-  const [showPass, setShowPass] = useState(false)
-  const isLogin = mode === 'login'
-  return (
-    <div className="min-h-screen overflow-hidden bg-[#050b1f] text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,118,255,.30),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,210,255,.18),transparent_34%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.04)_0,transparent_35%,rgba(255,255,255,.02)_100%)]" />
-      <div className="relative grid min-h-screen lg:grid-cols-[1.1fr_.9fr]">
-        <div className="hidden flex-col justify-between p-10 lg:flex">
-          <Logo />
-          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="grid max-w-6xl grid-cols-[1fr_.85fr] items-center gap-8">
-            <div>
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-300/20 bg-blue-500/10 px-4 py-2 text-sm text-blue-100">
-                <ShieldCheck className="h-4 w-4" /> MatPay merchant infrastructure
-              </div>
-              <h2 className="text-6xl font-black leading-tight tracking-tight">Terima QRIS, kelola saldo, dan settlement otomatis.</h2>
-              <p className="mt-6 text-lg leading-8 text-blue-100/75">Dashboard merchant modern dengan API key, webhook, invoice, QRIS payment page, withdraw, dan settlement 24 jam.</p>
-              <div className="mt-8 grid grid-cols-3 gap-4">
-                {['QRIS All Payment', 'Webhook Realtime', 'Settlement 24 Jam'].map((item) => (
-                  <div key={item} className="rounded-3xl border border-blue-200/10 bg-white/[0.06] p-4 backdrop-blur">
-                    <CheckCircle2 className="mb-3 h-5 w-5 text-emerald-400" />
-                    <p className="text-sm font-semibold text-blue-50">{item}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-[2.5rem] border border-blue-200/10 bg-gradient-to-br from-white/10 to-blue-500/10 p-5 shadow-2xl shadow-blue-950/40">
-              <MascotSlot type={isLogin ? 'login' : 'success'} className="h-[430px]" />
-            </div>
-          </motion.div>
-          <p className="text-sm text-blue-100/45">© 2026 MatPay Indonesia</p>
-        </div>
-        <div className="flex items-center justify-center p-5">
-          <motion.div initial={{ opacity: 0, scale: .96 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md rounded-[2rem] border border-blue-100/10 bg-white/[0.08] p-6 shadow-2xl shadow-blue-950/50 backdrop-blur-xl">
-            <div className="mb-8 flex items-center justify-between lg:hidden"><Logo /></div>
-            <div className="mb-6 lg:hidden"><MascotSlot type={isLogin ? 'login' : 'success'} className="h-44" /></div>
-            <div className="mb-8">
-              <div className="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-blue-500/15 text-blue-200 ring-1 ring-blue-200/10">
-                {isLogin ? <LogIn className="h-7 w-7" /> : <UserPlus className="h-7 w-7" />}
-              </div>
-              <h2 className="text-3xl font-black">{isLogin ? 'Login Merchant' : 'Register Merchant'}</h2>
-              <p className="mt-2 text-sm text-blue-100/60">{isLogin ? 'Masuk ke dashboard MatPay kamu.' : 'Buat akun merchant dan mulai terima pembayaran.'}</p>
-            </div>
-            <div className="space-y-4">
-              {!isLogin && <input className="w-full rounded-2xl border border-blue-100/10 bg-[#06112e]/70 px-4 py-4 outline-none transition placeholder:text-blue-100/35 focus:border-[#24b7ff]" placeholder="Nama bisnis / toko" />}
-              <input className="w-full rounded-2xl border border-blue-100/10 bg-[#06112e]/70 px-4 py-4 outline-none transition placeholder:text-blue-100/35 focus:border-[#24b7ff]" placeholder="Email merchant" />
-              <div className="relative">
-                <input type={showPass ? 'text' : 'password'} className="w-full rounded-2xl border border-blue-100/10 bg-[#06112e]/70 px-4 py-4 pr-12 outline-none transition placeholder:text-blue-100/35 focus:border-[#24b7ff]" placeholder="Password" />
-                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-100/50">{showPass ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
-              </div>
-              {!isLogin && <input className="w-full rounded-2xl border border-blue-100/10 bg-[#06112e]/70 px-4 py-4 outline-none transition placeholder:text-blue-100/35 focus:border-[#24b7ff]" placeholder="Nomor WhatsApp" />}
-              <button onClick={onLogin} className="w-full rounded-2xl bg-gradient-to-r from-[#0a73ff] via-[#0062ff] to-[#00b9ff] px-5 py-4 font-bold text-white shadow-lg shadow-blue-600/30 transition hover:scale-[1.01]">{isLogin ? 'Masuk Dashboard' : 'Buat Akun Merchant'}</button>
-            </div>
-            <p className="mt-6 text-center text-sm text-blue-100/60">{isLogin ? 'Belum punya akun? ' : 'Sudah punya akun? '}<button onClick={() => setMode(isLogin ? 'register' : 'login')} className="font-bold text-[#5fd4ff]">{isLogin ? 'Register' : 'Login'}</button></p>
-          </motion.div>
-        </div>
+      <Img src={assets.logoIcon} alt="MatPay" className="h-10 w-10 rounded-xl object-contain" />
+      <Img src={assets.logoFullWhite} alt="MatPay" className="h-9 max-w-[145px] object-contain object-left" />
+      <div className="hidden">
+        <b>MatPay</b>
       </div>
     </div>
-  )
+  );
+}
+
+function Mascot({ type, className = "" }) {
+  const map = {
+    login: assets.mascotLogin,
+    qris: assets.mascotQris,
+    loading: assets.mascotLoading,
+    success: assets.mascotSuccess,
+    failed: assets.mascotFailed,
+    cs: assets.mascotCs,
+    avatar: assets.mascotAvatar,
+    empty: assets.mascotEmpty,
+  };
+
+  return (
+    <Img
+      src={map[type]}
+      alt={`maskot-${type}`}
+      className={`object-contain drop-shadow-2xl ${className}`}
+    />
+  );
+}
+
+function Auth({ mode, setMode, onLogin }) {
+  const [show, setShow] = useState(false);
+  const login = mode === "login";
+
+  return (
+    <main className="min-h-screen bg-[#f4f8ff] text-[#06133a]">
+      <div className="grid min-h-screen lg:grid-cols-2">
+        <section className="relative hidden overflow-hidden bg-gradient-to-br from-[#0057ff] to-[#0aa7ff] p-10 text-white lg:flex lg:flex-col lg:justify-between">
+          <Logo />
+
+          <div className="relative z-10">
+            <h1 className="max-w-xl text-5xl font-black leading-tight">
+              Solusi Pembayaran Digital untuk Bisnis Anda
+            </h1>
+            <p className="mt-5 max-w-md text-blue-50/80">
+              Terima QRIS, kelola transaksi, withdraw, settlement, dan webhook dalam satu dashboard.
+            </p>
+
+            <div className="mt-10 h-[420px]">
+              <Mascot type="login" className="h-full" />
+            </div>
+          </div>
+
+          <p className="text-sm text-blue-50/70">© 2026 MatPay Indonesia</p>
+        </section>
+
+        <section className="flex items-center justify-center p-5">
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-md rounded-[28px] border border-blue-100 bg-white p-7 shadow-xl"
+          >
+            <div className="mb-7 flex justify-center lg:hidden">
+              <Mascot type="login" className="h-40" />
+            </div>
+
+            <div className="mb-7">
+              <div className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-600">
+                {login ? <LogIn /> : <UserPlus />}
+              </div>
+              <h2 className="text-3xl font-black">
+                {login ? "Masuk ke MatPay" : "Daftar Akun MatPay"}
+              </h2>
+              <p className="mt-2 text-sm text-slate-500">
+                {login ? "Silakan masuk untuk melanjutkan." : "Buat akun merchant baru."}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {!login && <Input placeholder="Nama bisnis" />}
+              <Input placeholder="Email merchant" />
+
+              <div className="relative">
+                <Input type={show ? "text" : "password"} placeholder="Password" />
+                <button
+                  onClick={() => setShow(!show)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                >
+                  {show ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+
+              {!login && <Input placeholder="Nomor WhatsApp" />}
+
+              <button
+                onClick={onLogin}
+                className="w-full rounded-2xl bg-[#0057ff] py-4 font-bold text-white shadow-lg shadow-blue-500/25"
+              >
+                {login ? "Masuk" : "Daftar Sekarang"}
+              </button>
+            </div>
+
+            <p className="mt-6 text-center text-sm text-slate-500">
+              {login ? "Belum punya akun? " : "Sudah punya akun? "}
+              <button
+                onClick={() => setMode(login ? "register" : "login")}
+                className="font-bold text-blue-600"
+              >
+                {login ? "Daftar sekarang" : "Masuk di sini"}
+              </button>
+            </p>
+          </motion.div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function Input(props) {
+  return (
+    <input
+      {...props}
+      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm outline-none transition focus:border-blue-500"
+    />
+  );
 }
 
 function Sidebar({ active, setActive, open, setOpen }) {
   return (
     <>
-      <div onClick={() => setOpen(false)} className={`fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden ${open ? 'block' : 'hidden'}`} />
-      <aside className={`fixed left-0 top-0 z-40 h-screen w-80 border-r border-blue-100/10 bg-[#050b1f]/95 p-5 text-white backdrop-blur-xl transition lg:sticky lg:block ${open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="mb-8 flex items-center justify-between"><Logo /><button onClick={() => setOpen(false)} className="lg:hidden"><X /></button></div>
-        <div className="space-y-2">
-          {menu.map((item) => {
-            const Icon = item.icon
-            const selected = active === item.id
-            return <button key={item.id} onClick={() => { setActive(item.id); setOpen(false) }} className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${selected ? 'bg-gradient-to-r from-[#0a73ff]/25 to-[#00b9ff]/15 text-blue-50 ring-1 ring-blue-300/20' : 'text-blue-100/50 hover:bg-white/5 hover:text-white'}`}><Icon className="h-5 w-5" /><span className="font-semibold">{item.label}</span></button>
-          })}
+      <div
+        onClick={() => setOpen(false)}
+        className={`fixed inset-0 z-30 bg-black/40 lg:hidden ${open ? "block" : "hidden"}`}
+      />
+
+      <aside
+        className={`fixed left-0 top-0 z-40 h-screen w-72 bg-[#06133a] p-5 text-white transition lg:sticky ${
+          open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        <div className="mb-8 flex items-center justify-between">
+          <Logo />
+          <button onClick={() => setOpen(false)} className="lg:hidden">
+            <X />
+          </button>
         </div>
-        <div className="absolute bottom-5 left-5 right-5 overflow-hidden rounded-3xl border border-blue-100/10 bg-gradient-to-br from-blue-500/15 to-white/5 p-4">
-          <Sparkles className="mb-3 h-5 w-5 text-[#5fd4ff]" />
-          <p className="text-sm font-bold text-white">Need integration?</p>
-          <p className="mt-1 text-xs text-blue-100/55">Hubungkan API MatPay ke website, bot, atau Minecraft store.</p>
-          <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-white/10 py-3 text-sm font-bold text-white">Docs API <ChevronRight className="h-4 w-4" /></button>
+
+        <nav className="space-y-2">
+          {menus.map((m) => {
+            const Icon = m.icon;
+            const selected = active === m.id;
+
+            return (
+              <button
+                key={m.id}
+                onClick={() => {
+                  setActive(m.id);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${
+                  selected
+                    ? "bg-[#0057ff] text-white"
+                    : "text-blue-100/65 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <Icon size={18} />
+                {m.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="absolute bottom-5 left-5 right-5 rounded-2xl bg-white/10 p-4">
+          <p className="text-xs text-blue-100/60">Saldo tersedia</p>
+          <h3 className="mt-1 text-xl font-black">Rp12.450.000</h3>
+          <button className="mt-4 w-full rounded-xl bg-blue-500 py-3 text-sm font-bold">
+            Tarik Dana
+          </button>
         </div>
       </aside>
     </>
-  )
+  );
 }
 
 function Header({ setOpen }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-blue-100/10 bg-[#050b1f]/75 px-4 py-4 backdrop-blur-xl lg:px-8">
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 px-5 py-4 backdrop-blur lg:px-8">
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <button onClick={() => setOpen(true)} className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10 text-white lg:hidden"><Menu /></button>
-          <div><h2 className="text-xl font-black text-white">Merchant Dashboard</h2><p className="text-xs text-blue-100/50">Kelola transaksi dan settlement MatPay</p></div>
+        <button
+          onClick={() => setOpen(true)}
+          className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-50 text-blue-700 lg:hidden"
+        >
+          <Menu />
+        </button>
+
+        <div>
+          <h2 className="text-xl font-black text-[#06133a]">Dashboard</h2>
+          <p className="text-sm text-slate-500">Selamat datang kembali, Merchant!</p>
         </div>
-        <div className="hidden flex-1 justify-center md:flex"><div className="flex w-full max-w-md items-center gap-3 rounded-2xl border border-blue-100/10 bg-white/5 px-4 py-3 text-blue-100/50"><Search className="h-4 w-4" /><span className="text-sm">Cari invoice, order id, transaksi...</span></div></div>
-        <div className="flex items-center gap-3"><button className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10 text-white"><Bell className="h-5 w-5" /></button><div className="flex items-center gap-3 rounded-2xl bg-white/10 p-2 pr-4"><AssetImage src={assets.mascotAvatar} alt="Merchant avatar" className="h-9 w-9 rounded-xl object-cover" fallback={<div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[#0a73ff] to-[#00b9ff] font-black">M</div>} /><div className="hidden sm:block"><p className="text-sm font-bold text-white">Mat Store</p><p className="text-xs text-blue-100/50">Verified Merchant</p></div></div></div>
+
+        <div className="ml-auto hidden max-w-md flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-400 md:flex">
+          <Search size={18} />
+          <span className="text-sm">Cari transaksi, invoice, order ID...</span>
+        </div>
+
+        <button className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-50 text-blue-700">
+          <Bell size={18} />
+        </button>
+
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-2 pr-4">
+          <Mascot type="avatar" className="h-9 w-9 rounded-full" />
+          <div className="hidden sm:block">
+            <p className="text-sm font-bold text-[#06133a]">MatPay Store</p>
+            <p className="text-xs text-slate-500">Merchant</p>
+          </div>
+        </div>
       </div>
     </header>
-  )
+  );
 }
 
-function StatCard({ title, value, sub, icon: Icon }) {
-  return <div className="rounded-[1.7rem] border border-blue-100/10 bg-white/[0.06] p-5 shadow-xl shadow-black/10"><div className="mb-5 flex items-center justify-between"><div className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-500/15 text-[#5fd4ff]"><Icon className="h-6 w-6" /></div><span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300">Live</span></div><p className="text-sm text-blue-100/55">{title}</p><h3 className="mt-1 text-3xl font-black text-white">{value}</h3><p className="mt-2 text-xs text-blue-100/35">{sub}</p></div>
+function DashboardPage() {
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Stat title="Total Transaksi" value="1.250" sub="+12.5% dari kemarin" icon={ReceiptText} />
+        <Stat title="Total Volume" value="Rp125.400.000" sub="+8.2% dari kemarin" icon={Wallet} />
+        <Stat title="Berhasil" value="1.180" sub="94.4%" icon={CheckCircle2} good />
+        <Stat title="Pending Settlement" value="Rp8.750.000" sub="Akan cair dalam 24 jam" icon={Clock3} />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+        <Card title="Transaksi Terbaru">
+          <TransactionList compact />
+        </Card>
+
+        <Card title="Quick Action QRIS">
+          <div className="rounded-3xl bg-blue-50 p-5">
+            <QrCode className="mb-4 text-blue-600" size={36} />
+            <h3 className="text-lg font-black">Buat Payment QRIS</h3>
+            <p className="mt-2 text-sm text-slate-500">
+              Generate invoice dan QRIS untuk pembayaran customer.
+            </p>
+            <button className="mt-5 w-full rounded-2xl bg-blue-600 py-3 font-bold text-white">
+              Buat Payment
+            </button>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
 }
 
-function Overview() {
-  return <div className="space-y-6"><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"><StatCard title="Saldo Aktif" value="Rp8.420.000" sub="Bisa digunakan untuk withdraw" icon={Wallet} /><StatCard title="Settlement Pending" value="Rp2.150.000" sub="Cair otomatis setelah 24 jam" icon={Clock3} /><StatCard title="Transaksi Hari Ini" value="128" sub="+18% dari kemarin" icon={ReceiptText} /><StatCard title="Success Rate" value="97.8%" sub="Webhook aktif dan stabil" icon={ShieldCheck} /></div><div className="grid gap-6 xl:grid-cols-3"><div className="rounded-[2rem] border border-blue-100/10 bg-white/[0.06] p-6 xl:col-span-2"><div className="mb-5 flex items-center justify-between"><h3 className="text-xl font-black text-white">Transaksi Terbaru</h3><button className="text-sm font-bold text-[#5fd4ff]">Lihat semua</button></div><div className="space-y-3">{transactions.map((trx) => <div key={trx.id} className="flex items-center justify-between rounded-2xl bg-[#06112e]/70 p-4"><div><p className="font-bold text-white">{trx.name}</p><p className="text-xs text-blue-100/35">{trx.id} • {trx.time}</p></div><div className="text-right"><p className="font-black text-white">{trx.amount}</p><span className={`text-xs font-bold ${trx.status === 'Success' ? 'text-emerald-300' : trx.status === 'Pending' ? 'text-amber-300' : 'text-rose-300'}`}>{trx.status}</span></div></div>)}</div></div><div className="overflow-hidden rounded-[2rem] border border-blue-100/10 bg-gradient-to-br from-blue-500/15 via-white/[0.06] to-cyan-400/10 p-6"><h3 className="text-xl font-black text-white">QRIS Universal</h3><p className="mt-2 text-sm leading-6 text-blue-100/65">Support pembayaran dari e-wallet dan mobile banking yang bisa scan QRIS.</p><MascotSlot type="qris" className="my-3 h-64" /><button className="w-full rounded-2xl bg-white px-4 py-3 font-black text-[#062b86]">Buat Payment Link</button></div></div></div>
+function Stat({ title, value, sub, icon: Icon, good }) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="mb-5 grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-600">
+        <Icon />
+      </div>
+      <p className="text-sm text-slate-500">{title}</p>
+      <h3 className="mt-1 text-2xl font-black text-[#06133a]">{value}</h3>
+      <p className={good ? "mt-2 text-xs font-bold text-emerald-600" : "mt-2 text-xs text-slate-400"}>
+        {sub}
+      </p>
+    </div>
+  );
 }
 
-function SimpleSection({ active }) {
-  const map = { transactions: ['Manajemen Transaksi', 'Filter order id, status pending/success/failed, nominal, dan tanggal transaksi.'], payment: ['QRIS Payment Page', 'Generate invoice QRIS, expired time, auto check status, dan redirect setelah pembayaran.'], withdraw: ['Withdraw Saldo', 'Tarik saldo aktif ke rekening/e-wallet merchant dengan validasi admin atau otomatis.'], settlement: ['Settlement 24 Jam', 'Saldo transaksi masuk ke pending settlement, lalu cair otomatis setelah 24 jam.'], apikey: ['API Key & Webhook', 'Kelola secret key, callback URL, webhook signature, dan mode sandbox/production.'], settings: ['Pengaturan Merchant', 'Profil toko, logo, rekening payout, password, dan keamanan akun.'] }
-  const [title, desc] = map[active] || map.transactions
-  const mascotType = active === 'payment' ? 'qris' : active === 'settlement' ? 'loading' : active === 'withdraw' ? 'success' : active === 'transactions' ? 'success' : 'login'
-  return <div className="grid gap-6 xl:grid-cols-[1fr_360px]"><div className="rounded-[2rem] border border-blue-100/10 bg-white/[0.06] p-6"><div className="mb-6"><h3 className="text-2xl font-black text-white">{title}</h3><p className="mt-2 text-blue-100/60">{desc}</p></div>{active === 'apikey' ? <div className="space-y-4">{['Public Key', 'Secret Key', 'Webhook URL'].map((x, i) => <div key={x} className="flex items-center justify-between rounded-2xl bg-[#06112e]/70 p-4"><div><p className="text-sm text-blue-100/45">{x}</p><p className="mt-1 break-all font-mono text-sm text-white">{i === 2 ? 'https://domainkamu.com/matpay/callback' : `MP_${i === 0 ? 'PUB' : 'SEC'}_xxxxxxxxxxxxxxxx`}</p></div><Copy className="h-5 w-5 shrink-0 text-[#5fd4ff]" /></div>)}</div> : <div className="grid gap-4 md:grid-cols-3">{[1, 2, 3].map((item) => <div key={item} className="rounded-3xl bg-[#06112e]/70 p-5"><div className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-blue-500/15 text-[#5fd4ff]"><ShieldCheck /></div><h4 className="font-black text-white">Feature Block {item}</h4><p className="mt-2 text-sm leading-6 text-blue-100/50">Komponen preview untuk halaman {title.toLowerCase()}.</p></div>)}</div>}</div><div className="rounded-[2rem] border border-blue-100/10 bg-gradient-to-br from-blue-500/15 to-cyan-400/10 p-5"><MascotSlot type={mascotType} className="h-80" /><p className="mt-3 text-center text-sm font-semibold text-blue-100/60">Asset slot: {mascotType}</p></div></div>
+function Card({ title, children }) {
+  return (
+    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h3 className="mb-5 text-xl font-black text-[#06133a]">{title}</h3>
+      {children}
+    </section>
+  );
 }
 
-function Dashboard() {
-  const [active, setActive] = useState('overview')
-  const [open, setOpen] = useState(false)
-  return <div className="min-h-screen bg-[#050b1f] text-white"><div className="fixed inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,118,255,.22),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(0,185,255,.12),transparent_35%)]" /><div className="relative lg:grid lg:grid-cols-[20rem_1fr]"><Sidebar active={active} setActive={setActive} open={open} setOpen={setOpen} /><main className="min-h-screen"><Header setOpen={setOpen} /><section className="p-4 lg:p-8">{active === 'overview' ? <Overview /> : <SimpleSection active={active} />}</section></main></div></div>
+function TransactionList({ empty = false }) {
+  if (empty) return <EmptyState />;
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[620px] text-left text-sm">
+        <thead className="text-slate-400">
+          <tr>
+            <th className="py-3">Order ID</th>
+            <th>Metode</th>
+            <th>Jumlah</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {trx.map(([id, method, amount, status]) => (
+            <tr key={id} className="border-t border-slate-100">
+              <td className="py-4 font-semibold">{id}</td>
+              <td>{method}</td>
+              <td className="font-bold">{amount}</td>
+              <td>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold ${
+                    status === "Berhasil"
+                      ? "bg-emerald-50 text-emerald-600"
+                      : status === "Pending"
+                      ? "bg-amber-50 text-amber-600"
+                      : "bg-red-50 text-red-600"
+                  }`}
+                >
+                  {status}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="grid place-items-center rounded-3xl bg-blue-50/60 p-10 text-center">
+      <Mascot type="empty" className="h-56" />
+      <h3 className="mt-4 text-2xl font-black text-[#06133a]">Belum ada data</h3>
+      <p className="mt-2 max-w-sm text-sm text-slate-500">
+        Data belum tersedia. Mulai buat payment pertama kamu.
+      </p>
+      <button className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 font-bold text-white">
+        <Plus size={18} /> Buat Payment
+      </button>
+    </div>
+  );
+}
+
+function QrisPage() {
+  return (
+    <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
+      <Card title="QRIS Payment Page">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <h2 className="text-3xl font-black text-[#06133a]">Scan QR untuk membayar</h2>
+            <p className="mt-3 text-slate-500">
+              Gunakan aplikasi e-wallet atau mobile banking yang mendukung QRIS.
+            </p>
+
+            <div className="mt-8 space-y-4">
+              <Info label="Order ID" value="INV-20240516-002" />
+              <Info label="Total Pembayaran" value="Rp250.000" />
+              <Info label="Expired" value="04:59" />
+            </div>
+          </div>
+
+          <div className="grid place-items-center rounded-3xl border border-slate-200 bg-white p-6">
+            <QrCode size={190} className="text-[#06133a]" />
+            <p className="mt-4 font-bold">NMID: ID1023101234567</p>
+          </div>
+        </div>
+      </Card>
+
+      <section className="rounded-3xl bg-blue-50 p-6">
+        <Mascot type="qris" className="h-[360px] w-full" />
+      </section>
+    </div>
+  );
+}
+
+function Info({ label, value }) {
+  return (
+    <div className="rounded-2xl bg-slate-50 p-4">
+      <p className="text-xs text-slate-400">{label}</p>
+      <p className="mt-1 font-black text-[#06133a]">{value}</p>
+    </div>
+  );
+}
+
+function ProcessingPage() {
+  return <PaymentState type="loading" title="Memproses Pembayaran..." icon={<Loader2 className="animate-spin text-blue-600" />} />;
+}
+
+function SuccessPage() {
+  return <PaymentState type="success" title="Pembayaran Berhasil!" success />;
+}
+
+function FailedPage() {
+  return <PaymentState type="failed" title="Pembayaran Gagal" failed />;
+}
+
+function PaymentState({ type, title, icon, success, failed }) {
+  return (
+    <div className={`grid gap-6 rounded-3xl p-8 lg:grid-cols-2 ${failed ? "bg-red-50" : success ? "bg-emerald-50" : "bg-blue-50"}`}>
+      <div className="grid place-items-center">
+        <Mascot type={type} className="h-[420px]" />
+      </div>
+
+      <div className="flex items-center">
+        <div className="w-full rounded-3xl bg-white p-7 shadow-sm">
+          <div className="mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-slate-50">
+            {icon || (success ? <CheckCircle2 className="text-emerald-600" /> : <AlertCircle className="text-red-600" />)}
+          </div>
+          <h2 className={`text-3xl font-black ${failed ? "text-red-600" : success ? "text-emerald-600" : "text-[#06133a]"}`}>
+            {title}
+          </h2>
+          <p className="mt-2 text-slate-500">
+            {failed ? "Pembayaran tidak dapat diproses." : success ? "Dana berhasil diterima." : "Mohon tunggu sebentar."}
+          </p>
+
+          <div className="mt-6 space-y-3">
+            <Info label="Order ID" value="INV-20240516-002" />
+            <Info label="Total Pembayaran" value="Rp250.000" />
+            <Info label="Metode" value="QRIS" />
+          </div>
+
+          <button className={`mt-6 w-full rounded-2xl py-4 font-bold text-white ${failed ? "bg-red-600" : "bg-blue-600"}`}>
+            {failed ? "Coba Lagi" : "Kembali ke Dashboard"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WithdrawPage() {
+  return (
+    <div className="grid gap-6 xl:grid-cols-2">
+      <Card title="Withdraw / Tarik Dana">
+        <div className="space-y-4">
+          <Info label="Saldo tersedia" value="Rp25.750.000" />
+          <Input placeholder="Nominal penarikan" />
+          <Input placeholder="Catatan penarikan" />
+          <button className="w-full rounded-2xl bg-blue-600 py-4 font-bold text-white">
+            Tarik Dana
+          </button>
+        </div>
+      </Card>
+
+      <Card title="Rekening Tujuan">
+        <div className="rounded-3xl border border-slate-200 p-5">
+          <p className="font-black">BCA</p>
+          <p className="mt-2 text-sm text-slate-500">1234 5678 9012</p>
+          <p className="text-sm text-slate-500">a.n MatPay Store</p>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function SettlementPage() {
+  return (
+    <Card title="Settlement">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Stat title="Pending" value="Rp8.750.000" sub="Dalam proses" icon={Clock3} />
+        <Stat title="Berhasil" value="Rp30.250.000" sub="Bulan ini" icon={CheckCircle2} good />
+        <Stat title="Total Batch" value="35" sub="Riwayat settlement" icon={ReceiptText} />
+      </div>
+    </Card>
+  );
+}
+
+function ApiKeyPage() {
+  return (
+    <Card title="API Key & Webhook">
+      {["Public Key", "Secret Key", "Webhook URL"].map((x, i) => (
+        <div key={x} className="mb-4 flex items-center justify-between rounded-2xl bg-slate-50 p-4">
+          <div>
+            <p className="text-sm text-slate-500">{x}</p>
+            <p className="mt-1 break-all font-mono text-sm font-bold">
+              {i === 2 ? "https://domainkamu.com/matpay/callback" : `MP_${i === 0 ? "PUB" : "SEC"}_xxxxxxxxxxxx`}
+            </p>
+          </div>
+          <Copy className="text-blue-600" />
+        </div>
+      ))}
+    </Card>
+  );
+}
+
+function SupportPage() {
+  return (
+    <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+      <section className="rounded-3xl bg-blue-50 p-6">
+        <Mascot type="cs" className="h-80 w-full" />
+      </section>
+
+      <Card title="Customer Support">
+        <p className="text-slate-500">
+          Tim MatPay siap bantu kamu untuk integrasi, pembayaran, webhook, dan settlement.
+        </p>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <Info label="Live Chat" value="Online 24 Jam" />
+          <Info label="Email" value="support@matpay.id" />
+          <Info label="WhatsApp" value="0812-3456-7890" />
+        </div>
+
+        <button className="mt-6 rounded-2xl bg-blue-600 px-6 py-4 font-bold text-white">
+          Mulai Chat
+        </button>
+      </Card>
+    </div>
+  );
+}
+
+function SettingsPage() {
+  return (
+    <Card title="Pengaturan Profil">
+      <div className="grid gap-6 md:grid-cols-[1fr_260px]">
+        <div className="space-y-4">
+          <Input placeholder="Nama Merchant" defaultValue="MatPay Store" />
+          <Input placeholder="Email" defaultValue="merchant@matpay.id" />
+          <Input placeholder="Nomor Telepon" defaultValue="0812 3456 7890" />
+          <button className="rounded-2xl bg-blue-600 px-6 py-4 font-bold text-white">
+            Simpan Perubahan
+          </button>
+        </div>
+
+        <div className="grid place-items-center rounded-3xl bg-blue-50 p-6 text-center">
+          <Mascot type="avatar" className="h-36 rounded-full" />
+          <button className="mt-4 rounded-xl bg-white px-4 py-2 text-sm font-bold text-blue-600">
+            Ubah Foto
+          </button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function AppDashboard() {
+  const [active, setActive] = useState("dashboard");
+  const [open, setOpen] = useState(false);
+
+  const pages = {
+    dashboard: <DashboardPage />,
+    transactions: <Card title="Transaksi"><TransactionList /></Card>,
+    qris: <QrisPage />,
+    withdraw: <WithdrawPage />,
+    settlement: <SettlementPage />,
+    apikey: <ApiKeyPage />,
+    support: <SupportPage />,
+    settings: <SettingsPage />,
+    processing: <ProcessingPage />,
+    success: <SuccessPage />,
+    failed: <FailedPage />,
+  };
+
+  return (
+    <main className="min-h-screen bg-[#f4f8ff] text-[#06133a] lg:grid lg:grid-cols-[288px_1fr]">
+      <Sidebar active={active} setActive={setActive} open={open} setOpen={setOpen} />
+
+      <section>
+        <Header setOpen={setOpen} />
+
+        <div className="p-5 lg:p-8">
+          <div className="mb-5 flex flex-wrap gap-2">
+            {["processing", "success", "failed"].map((x) => (
+              <button
+                key={x}
+                onClick={() => setActive(x)}
+                className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-blue-600 shadow-sm"
+              >
+                Preview {x}
+              </button>
+            ))}
+          </div>
+
+          {pages[active]}
+        </div>
+      </section>
+    </main>
+  );
 }
 
 export default function App() {
-  const [page, setPage] = useState('login')
-  const [authMode, setAuthMode] = useState('login')
-  if (page === 'dashboard') return <Dashboard />
-  return <AuthPage mode={authMode} setMode={setAuthMode} onLogin={() => setPage('dashboard')} />
+  const [page, setPage] = useState("auth");
+  const [mode, setMode] = useState("login");
+
+  if (page === "dashboard") return <AppDashboard />;
+
+  return <Auth mode={mode} setMode={setMode} onLogin={() => setPage("dashboard")} />;
 }
