@@ -1,0 +1,23 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/api/auth/login", "destination": "/api/auth/login" },
+    { "source": "/api/auth/register", "destination": "/api/auth/register" },
+    { "source": "/api/auth/me", "destination": "/api/auth/me" },
+    { "source": "/api/auth/profile", "destination": "/api/auth/profile" },
+    { "source": "/api/transactions/stats", "destination": "/api/transactions/stats" },
+    { "source": "/api/transactions/:id", "destination": "/api/transactions/[id]" },
+    { "source": "/api/transactions", "destination": "/api/transactions/index" },
+    { "source": "/api/webhooks/logs", "destination": "/api/webhooks/logs" },
+    { "source": "/api/webhooks/simulate", "destination": "/api/webhooks/simulate" },
+    { "source": "/api/webhooks/:id", "destination": "/api/webhooks/[id]" },
+    { "source": "/api/webhooks", "destination": "/api/webhooks/index" },
+    { "source": "/api/keys", "destination": "/api/keys/index" },
+    { "source": "/api/keys/regenerate", "destination": "/api/keys/index" },
+    { "source": "/api/health", "destination": "/api/health" },
+    { "source": "/api/seed", "destination": "/api/seed" },
+    { "source": "/((?!api).*)", "destination": "/index.html" }
+  ]
+}

@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 function getToken() {
   return localStorage.getItem('matpay_token');
@@ -34,19 +34,19 @@ export const api = {
   getTransactions: (params = '') => request(`/transactions?${params}`),
   getStats: () => request('/transactions/stats'),
   createTransaction: (data) => request('/transactions', { method: 'POST', body: JSON.stringify(data) }),
-  updateTransactionStatus: (id, status) => request(`/transactions/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  updateTransactionStatus: (id, status) => request(`/transactions/${id}`, { method: 'PUT', body: JSON.stringify({ status }) }),
 
   // Webhooks
   getWebhooks: () => request('/webhooks'),
   createWebhook: (data) => request('/webhooks', { method: 'POST', body: JSON.stringify(data) }),
   updateWebhook: (id, data) => request(`/webhooks/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteWebhook: (id) => request(`/webhooks/${id}`, { method: 'DELETE' }),
-  simulateWebhook: (id, event) => request(`/webhooks/${id}/simulate`, { method: 'POST', body: JSON.stringify({ event }) }),
+  simulateWebhook: (id, event) => request('/webhooks/simulate', { method: 'POST', body: JSON.stringify({ webhookId: id, event }) }),
   getWebhookLogs: () => request('/webhooks/logs'),
 
   // API Keys
   getApiKeys: () => request('/keys'),
-  regenerateKey: (keyType) => request('/keys/regenerate', { method: 'POST', body: JSON.stringify({ keyType }) }),
+  regenerateKey: (keyType) => request('/keys', { method: 'POST', body: JSON.stringify({ keyType }) }),
 };
 
 export { getToken, setToken, removeToken };
