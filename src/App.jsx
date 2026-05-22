@@ -18,6 +18,12 @@ import Settings from './pages/Settings';
 
 function ProtectedRoute({ children }) {
   const isAuthenticated = useStore((s) => s.isAuthenticated);
+  const fetchUser = useStore((s) => s.fetchUser);
+
+  React.useEffect(() => {
+    if (isAuthenticated) fetchUser();
+  }, []);
+
   if (!isAuthenticated) return <Navigate to="/" replace />;
   return children;
 }

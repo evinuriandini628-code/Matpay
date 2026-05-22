@@ -7,14 +7,33 @@ import { useStore } from '../store/useStore';
 export default function Login() {
   const [mode, setMode] = useState('login');
   const [showPass, setShowPass] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const login = useStore((s) => s.login);
+  const register = useStore((s) => s.register);
   const navigate = useNavigate();
   const isLogin = mode === 'login';
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    login();
-    navigate('/dashboard');
+    setError('');
+    setLoading(true);
+    let result;
+    if (isLogin) {
+      result = await login(email, password);
+    } else {
+      result = await register({ name, email, password, phone });
+    }
+    setLoading(false);
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result.error);
+    }
   };
 
   return (
@@ -88,20 +107,32 @@ export default function Login() {
               </p>
             </div>
 
+            {error && (
+              <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   placeholder="Nama bisnis"
                   className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm outline-none transition focus:border-blue-500"
                 />
               )}
               <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email merchant"
                 type="email"
                 className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm outline-none transition focus:border-blue-500"
               />
               <div className="relative">
                 <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   type={showPass ? 'text' : 'password'}
                   placeholder="Password"
                   className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm outline-none transition focus:border-blue-500"
@@ -116,6 +147,8 @@ export default function Login() {
               </div>
               {!isLogin && (
                 <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   placeholder="Nomor WhatsApp"
                   className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm outline-none transition focus:border-blue-500"
                 />
@@ -123,10 +156,17 @@ export default function Login() {
 
               <button
                 type="submit"
-                className="w-full rounded-2xl bg-[#0057ff] py-4 font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700"
+                disabled={loading}
+                className="w-full rounded-2xl bg-[#0057ff] py-4 font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 disabled:opacity-50"
               >
-                {isLogin ? 'Masuk' : 'Daftar Sekarang'}
+                {loading ? 'Memproses...' : isLogin ? 'Masuk' : 'Daftar Sekarang'}
               </button>
+
+              {isLogin && (
+                <p className="text-center text-xs text-slate-400">
+                  Demo: merchant@matpay.id / password123
+                </p>
+              )}
             </form>
 
             <p className="mt-6 text-center text-sm text-slate-500">
