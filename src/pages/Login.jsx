@@ -15,8 +15,14 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const login = useStore((s) => s.login);
   const register = useStore((s) => s.register);
+  const isAuthenticated = useStore((s) => s.isAuthenticated);
   const navigate = useNavigate();
   const isLogin = mode === 'login';
+
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (isAuthenticated) navigate('/dashboard');
+  }, [isAuthenticated]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,7 +64,6 @@ export default function Login() {
             <p className="mt-5 max-w-md text-blue-50/80">
               Terima QRIS, Virtual Account, E-Wallet, Credit Card, kelola transaksi, webhook, dan settlement dalam satu dashboard.
             </p>
-
             <div className="mt-10 grid grid-cols-2 gap-4">
               {[
                 { label: 'QRIS', desc: 'Semua e-wallet & mbanking' },
@@ -74,20 +79,14 @@ export default function Login() {
             </div>
           </div>
 
-          <p className="text-sm text-blue-50/50">© 2026 MatPay Indonesia • All rights reserved</p>
-
-          {/* Decorative */}
+          <p className="text-sm text-blue-50/50">© 2026 MatPay Indonesia</p>
           <div className="absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-white/5" />
           <div className="absolute -top-10 right-20 h-48 w-48 rounded-full bg-white/5" />
         </section>
 
         {/* Right - Form */}
         <section className="flex items-center justify-center p-5">
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-md rounded-[28px] border border-blue-100 bg-white p-7 shadow-xl"
-          >
+          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md rounded-[28px] border border-blue-100 bg-white p-7 shadow-xl">
             <div className="mb-7 flex items-center gap-3 lg:hidden">
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400">
                 <Globe className="h-5 w-5 text-white" />
@@ -99,79 +98,37 @@ export default function Login() {
               <div className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-600">
                 {isLogin ? <LogIn size={22} /> : <UserPlus size={22} />}
               </div>
-              <h2 className="text-3xl font-black">
-                {isLogin ? 'Masuk ke MatPay' : 'Daftar Akun MatPay'}
-              </h2>
-              <p className="mt-2 text-sm text-slate-500">
-                {isLogin ? 'Silakan masuk untuk melanjutkan.' : 'Buat akun merchant baru.'}
-              </p>
+              <h2 className="text-3xl font-black">{isLogin ? 'Masuk ke MatPay' : 'Daftar Akun MatPay'}</h2>
+              <p className="mt-2 text-sm text-slate-500">{isLogin ? 'Silakan masuk untuk melanjutkan.' : 'Buat akun merchant baru.'}</p>
             </div>
 
             {error && (
-              <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
-                {error}
-              </div>
+              <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">{error}</div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Nama bisnis"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm outline-none transition focus:border-blue-500"
-                />
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nama bisnis" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm outline-none transition focus:border-blue-500" />
               )}
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email merchant"
-                type="email"
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm outline-none transition focus:border-blue-500"
-              />
+              <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email merchant" type="email" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm outline-none transition focus:border-blue-500" />
               <div className="relative">
-                <input
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  type={showPass ? 'text' : 'password'}
-                  placeholder="Password"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm outline-none transition focus:border-blue-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
-                >
+                <input value={password} onChange={(e) => setPassword(e.target.value)} type={showPass ? 'text' : 'password'} placeholder="Password" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm outline-none transition focus:border-blue-500" />
+                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
                   {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
               {!isLogin && (
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Nomor WhatsApp"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm outline-none transition focus:border-blue-500"
-                />
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Nomor WhatsApp" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm outline-none transition focus:border-blue-500" />
               )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-2xl bg-[#0057ff] py-4 font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 disabled:opacity-50"
-              >
+              <button type="submit" disabled={loading} className="w-full rounded-2xl bg-[#0057ff] py-4 font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 disabled:opacity-50">
                 {loading ? 'Memproses...' : isLogin ? 'Masuk' : 'Daftar Sekarang'}
               </button>
-
-              {isLogin && (
-                <p className="text-center text-xs text-slate-400">
-                  Demo: merchant@matpay.id / password123
-                </p>
-              )}
             </form>
 
             <p className="mt-6 text-center text-sm text-slate-500">
               {isLogin ? 'Belum punya akun? ' : 'Sudah punya akun? '}
-              <button onClick={() => setMode(isLogin ? 'register' : 'login')} className="font-bold text-blue-600">
+              <button onClick={() => { setMode(isLogin ? 'register' : 'login'); setError(''); }} className="font-bold text-blue-600">
                 {isLogin ? 'Daftar sekarang' : 'Masuk di sini'}
               </button>
             </p>

@@ -15,9 +15,7 @@
     { "source": "/api/webhooks/:id", "destination": "/api/webhooks/[id]" },
     { "source": "/api/webhooks", "destination": "/api/webhooks/index" },
     { "source": "/api/keys", "destination": "/api/keys/index" },
-    { "source": "/api/keys/regenerate", "destination": "/api/keys/index" },
     { "source": "/api/health", "destination": "/api/health" },
-    { "source": "/api/seed", "destination": "/api/seed" },
     { "source": "/((?!api).*)", "destination": "/index.html" }
   ]
 }

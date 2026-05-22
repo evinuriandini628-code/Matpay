@@ -1,4 +1,4 @@
-const { getDb, initDb } = require('../_lib/db');
+const { db } = require('../_lib/firebase-admin');
 const { verifyToken } = require('../_lib/auth');
 const { cors } = require('../_lib/cors');
 
@@ -6,22 +6,18 @@ module.exports = async function handler(req, res) {
   if (cors(req, res)) return;
   if (req.method !== 'PUT') return res.status(405).json({ error: 'Method not allowed' });
 
-  const userId = verifyToken(req);
-  if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+  const uid = await verifyToken(req);
+  if (!uid) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
-    await initDb();
-    const db = getDb();
     const { name, phone } = req.body;
+    const updates = {};
+    if (name) updates.name = name;
+    if (phone) updates.phone = phone;
 
-    if (name) await db.execute({ sql: 'UPDATE users SET name = ? WHERE id = ?', args: [name, userId] });
-    if (phone) await db.execute({ sql: 'UPDATE users SET phone = ? WHERE id = ?', args: [phone, userId] });
-
-    const result = await db.execute({
-      sql: 'SELECT id, name, email, phone, role, balance, pending_balance FROM users WHERE id = ?',
-      args: [userId]
-    });
-    res.json(result.rows[0]);
+    await db.collection('users').doc(uid).update(updates);
+    const userDoc = await db.collection('users').doc(uid).get();
+    res.json({ uid, ...userDoc.data() });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

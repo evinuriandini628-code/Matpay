@@ -1,56 +1,57 @@
 import { create } from 'zustand';
-import { api, getToken, setToken, removeToken } from '../utils/api';
+import { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from '../utils/firebase';
+import { api } from '../utils/api';
 
 export const useStore = create((set, get) => ({
   // Auth
-  isAuthenticated: !!getToken(),
+  isAuthenticated: false,
   user: null,
-  authLoading: false,
+  authLoading: true,
+
+  setAuth: (user) => set({ isAuthenticated: !!user, user, authLoading: false }),
 
   login: async (email, password) => {
-    set({ authLoading: true });
     try {
-      const { token, user } = await api.login(email, password);
-      setToken(token);
-      set({ isAuthenticated: true, user, authLoading: false });
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const userData = await api.getMe();
+      set({ isAuthenticated: true, user: userData });
       return { success: true };
     } catch (err) {
-      set({ authLoading: false });
-      return { success: false, error: err.message };
+      const msg = err.code === 'auth/invalid-credential' ? 'Email atau password salah'
+        : err.code === 'auth/user-not-found' ? 'Akun tidak ditemukan'
+        : err.message;
+      return { success: false, error: msg };
     }
   },
 
-  register: async (data) => {
-    set({ authLoading: true });
+  register: async ({ name, email, password, phone }) => {
     try {
-      const { token, user } = await api.register(data);
-      setToken(token);
-      set({ isAuthenticated: true, user, authLoading: false });
+      await createUserWithEmailAndPassword(auth, email, password);
+      // Create Firestore profile
+      const userData = await api.registerProfile({ name, phone });
+      set({ isAuthenticated: true, user: userData });
       return { success: true };
     } catch (err) {
-      set({ authLoading: false });
-      return { success: false, error: err.message };
+      const msg = err.code === 'auth/email-already-in-use' ? 'Email sudah terdaftar'
+        : err.code === 'auth/weak-password' ? 'Password minimal 6 karakter'
+        : err.message;
+      return { success: false, error: msg };
     }
   },
 
-  logout: () => {
-    removeToken();
+  logout: async () => {
+    await signOut(auth);
     set({ isAuthenticated: false, user: null, transactions: [], webhooks: [], webhookLogs: [] });
   },
 
   fetchUser: async () => {
     try {
-      const user = await api.getMe();
-      set({ user, isAuthenticated: true });
+      const userData = await api.getMe();
+      set({ user: userData, isAuthenticated: true });
     } catch {
-      removeToken();
-      set({ isAuthenticated: false, user: null });
+      set({ user: null });
     }
   },
-
-  // Balance (from user)
-  get balance() { return get().user?.balance || 0; },
-  get pendingBalance() { return get().user?.pending_balance || 0; },
 
   // Transactions
   transactions: [],
@@ -72,10 +73,7 @@ export const useStore = create((set, get) => ({
   updateTransactionStatus: async (id, status) => {
     try {
       const trx = await api.updateTransactionStatus(id, status);
-      set((s) => ({
-        transactions: s.transactions.map((t) => (t.id === id ? trx : t)),
-      }));
-      // Refresh user balance
+      set((s) => ({ transactions: s.transactions.map((t) => (t.id === id ? trx : t)) }));
       get().fetchUser();
       return trx;
     } catch (err) { console.error(err); }

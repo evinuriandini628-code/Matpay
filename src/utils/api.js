@@ -1,19 +1,15 @@
+import { auth } from './firebase';
+
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-function getToken() {
-  return localStorage.getItem('matpay_token');
-}
-
-function setToken(token) {
-  localStorage.setItem('matpay_token', token);
-}
-
-function removeToken() {
-  localStorage.removeItem('matpay_token');
+async function getToken() {
+  const user = auth.currentUser;
+  if (!user) return null;
+  return await user.getIdToken();
 }
 
 async function request(endpoint, options = {}) {
-  const token = getToken();
+  const token = await getToken();
   const headers = { 'Content-Type': 'application/json', ...options.headers };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -24,9 +20,8 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
-  // Auth
-  login: (email, password) => request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  register: (data) => request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+  // Auth (profile management - login/register handled by Firebase SDK directly)
+  registerProfile: (data) => request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   getMe: () => request('/auth/me'),
   updateProfile: (data) => request('/auth/profile', { method: 'PUT', body: JSON.stringify(data) }),
 
@@ -48,5 +43,3 @@ export const api = {
   getApiKeys: () => request('/keys'),
   regenerateKey: (keyType) => request('/keys', { method: 'POST', body: JSON.stringify({ keyType }) }),
 };
-
-export { getToken, setToken, removeToken };

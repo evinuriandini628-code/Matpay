@@ -1,42 +1,47 @@
-const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
-const { getDb, initDb } = require('../_lib/db');
-const { signToken } = require('../_lib/auth');
+// Register is handled on frontend via Firebase Auth SDK.
+// After Firebase creates the user, frontend calls this to create the Firestore profile.
+const { db } = require('../_lib/firebase-admin');
+const { verifyToken } = require('../_lib/auth');
 const { cors } = require('../_lib/cors');
-
-function uuid() { return crypto.randomUUID(); }
 
 module.exports = async function handler(req, res) {
   if (cors(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  const uid = await verifyToken(req);
+  if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+
   try {
-    await initDb();
-    const db = getDb();
-    const { name, email, password, phone } = req.body;
+    const { name, phone } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Nama, email, dan password wajib diisi' });
-    }
+    // Check if user profile already exists
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (userDoc.exists) return res.json(userDoc.data());
 
-    const existing = await db.execute({ sql: 'SELECT id FROM users WHERE email = ?', args: [email] });
-    if (existing.rows.length > 0) {
-      return res.status(400).json({ error: 'Email sudah terdaftar' });
-    }
+    const userData = {
+      uid,
+      name: name || 'Merchant',
+      phone: phone || null,
+      role: 'merchant',
+      balance: 0,
+      pendingBalance: 0,
+      createdAt: new Date().toISOString(),
+    };
 
-    const id = uuid();
-    const hashed = bcrypt.hashSync(password, 10);
-    await db.execute({ sql: 'INSERT INTO users (id, name, email, password, phone) VALUES (?, ?, ?, ?, ?)', args: [id, name, email, hashed, phone || null] });
+    await db.collection('users').doc(uid).set(userData);
 
     // Create API keys
-    await db.execute({
-      sql: 'INSERT INTO api_keys (id, user_id, public_key, secret_key, sandbox_public_key, sandbox_secret_key) VALUES (?, ?, ?, ?, ?, ?)',
-      args: [uuid(), id, 'MP_PUB_live_' + uuid().slice(0, 12), 'MP_SEC_live_' + uuid().slice(0, 12), 'MP_PUB_sandbox_' + uuid().slice(0, 12), 'MP_SEC_sandbox_' + uuid().slice(0, 12)]
+    const crypto = require('crypto');
+    await db.collection('apiKeys').doc(uid).set({
+      uid,
+      publicKey: 'MP_PUB_live_' + crypto.randomUUID().replace(/-/g, '').slice(0, 24),
+      secretKey: 'MP_SEC_live_' + crypto.randomUUID().replace(/-/g, '').slice(0, 24),
+      sandboxPublicKey: 'MP_PUB_sandbox_' + crypto.randomUUID().replace(/-/g, '').slice(0, 24),
+      sandboxSecretKey: 'MP_SEC_sandbox_' + crypto.randomUUID().replace(/-/g, '').slice(0, 24),
+      createdAt: new Date().toISOString(),
     });
 
-    const token = signToken(id);
-    const result = await db.execute({ sql: 'SELECT id, name, email, phone, role, balance, pending_balance FROM users WHERE id = ?', args: [id] });
-    res.status(201).json({ token, user: result.rows[0] });
+    res.status(201).json(userData);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
